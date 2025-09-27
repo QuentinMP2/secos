@@ -17,7 +17,7 @@ SECTIONS
    . = 0x300000;
 ```
 
-Cependant,  `readelf` informe que le point d'entrée est à `0x302010` :
+Cependant, `readelf` informe que le point d'entrée est à `0x302010` :
 
 ```bash
 (tp0)$ readelf -l kernel.elf
@@ -48,6 +48,14 @@ déterminer la taille de la section `.mbh`  et `.stack` et en déduire d'où
 provient la valeur de point d'entrée à `0x302010` au lieu de `0x300000`.**
 
 Note : il est possible de s'aider également de la page wiki sur les options de [linkage](https://github.com/agantet/secos-ng/wiki/Tooling#options-de-linkage).
+
+D'après le fichier [entry.s](../kernel/core/entry.s), on souhaite un alignement tous les 16 bits (`0x10`).
+Aucune directive lui est associée dans [entry.s](../kernel/core/entry.s) donc sa taille est de 0 bit.
+C'est pourquoi `.mbh` est située à l'adresse mémoire `0x300010`.
+
+Ensuite, un a la directive `.space 0x2000` qui implique de laisser un espace de 8192 bits avant d'assigner l'adresse mémoire de la pile. `0x302010` étant bien une adresse alignée sur 16 bits, on en conclut que `.stack` est de taille `0x2000`.
+
+Le point d'entrée `__kernel_start__` étant défini comme la suite directe, on en conclut que le premier octet disponible est à l'adresse `0x302010` et donc que `__kernel_start__` est à l'adresse `0x302010`. 
 
 
 ## Cartographie mémoire au démarrage
@@ -103,6 +111,13 @@ debug("after: 0x%x\n", *ptr_in_reserved_mem);                // check
 ```
 Le comportement observé semble-t-il cohérent ?
 
+Le comportement observé semble cohérent car la modification en zone mémoire réservée n'est pas effective, on obtient la même valeur avant et après écriture. 
+Ce qui n'est pas le cas dans la zone mémoire libre où l'écriture a bien fonctionné. 
+
 **Q4 : Compléter la fonction `tp()` de [tp.c](./tp.c) pour essayer de lire ou
   écrire à une adresse en dehors de la mémoire physique disponible (128 MB).
   Que se passe-t-il ? Comment pourrait-on l'expliquer ?**
+
+On arrive bien à lire et à écrire en dehors de la mémoire physique de notre système.
+On pourrait l'expliquer par le fait qu'on utiliser une machine virtuelle et qu'elle est permissive à ce niveau-là.
+Peut-être que sur du vrai matériel on aurait eu une segmentation fault ou alors obtenu des valeurs aléatoires.
