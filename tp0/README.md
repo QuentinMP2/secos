@@ -121,3 +121,5 @@ Ce qui n'est pas le cas dans la zone mémoire libre où l'écriture a bien fonct
 On arrive bien à lire et à écrire en dehors de la mémoire physique de notre système.
 On pourrait l'expliquer par le fait qu'on utiliser une machine virtuelle et qu'elle est permissive à ce niveau-là.
 Peut-être que sur du vrai matériel on aurait eu une segmentation fault ou alors obtenu des valeurs aléatoires.
+
+En fait c'est GRUB qui met en place une GDT très minimaliste puis passe en mode protégé pour minimiser le temps passé en mode réel. Donc il n'y a pas de faute levée.
