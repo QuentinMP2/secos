@@ -2,11 +2,13 @@
 #include <debug.h>
 #include <segmem.h>
 
-void userland() {
-   asm volatile ("mov %eax, %cr0");
+void userland()
+{
+   asm volatile("mov %eax, %cr0");
 }
 
-void tp() {
+void tp()
+{
    // ========
    // GDTR
    // ========
@@ -45,7 +47,7 @@ void tp() {
    descs[2].d = 1;
    descs[2].g = 1;
    descs[2].base_3 = 0x00;
-   seg_sel_t seg2 = {.index = 2, .rpl = 0, .ti = 0};
+   // seg_sel_t seg2 = {.index = 2, .rpl = 0, .ti = 0};
 
    // Données, 32 bits RW, base 0x600000, limite 32 octets, ring 0
    descs[3].limit_1 = 0x20;
@@ -106,7 +108,16 @@ void tp() {
    set_es(seg3);
    set_fs(seg5);
    set_gs(seg5);
-    
-   fptr32_t farjump = {.offset = (uint32_t)&userland, .segment = seg4.raw};
-   farjump(farjump);
+
+   // Set CS
+   // fptr32_t farjump = {.offset = (uint32_t)&userland, .segment = seg4.raw};
+   // farjump(farjump);
+
+   asm volatile("push %%ss\n\t"
+                "push %%esp\n\t"
+                "pushfl\n\t"
+                "push $0\n\t"
+                "push $1\n\t"
+                "iret" ::"r"(seg4),
+                "r"(userland));
 }
